@@ -68,6 +68,23 @@ provides in development mode.
 
     docker run --name mydb -d mongo
     docker run --cap-add SYS_ADMIN -it --rm -p 3000:3000 --link mydb:db -e "MONGO_URL=mongodb://db" -v "$(pwd)":/app danieldent/meteor vboxsf-shim meteor
+    
+## Caching in Development Mode
+You might notice delays when container starts first time in Development mode. This happens due to the fact that meteor needs to update package catalog every time container is relaunched. Recommended workaround to avoid slow start is to force cache update while building container. Then meteor will just check that cache is up to date and update delta which should be significantly smaller than the whole catalog. 
+
+To achieve this you need to build your own container on top of this one. See example Dockerfile:
+```
+FROM danieldent/meteor
+# This forces package-catalog update. Should speed up further runs
+RUN meteor show meteor-platform
+```
+Then just run the following commands to use your own image to run meteor
+```
+docker build . -t YOUR_PROJECT_NAME/base
+docker run -it --rm -p 3000:3000 -v "$(pwd)":/app YOUR_PROJECT_NAME/base
+```
+
+
 
 ## Example: Dockerizing your Meteor App for CI/CD/Production Builds
 
